@@ -1,7 +1,7 @@
 package com.pedrobneto.easynfc.initiator
 
 data class NfcResult<T>(
-    val status: NfcStatus,
+    val status: DataStreamStatus,
     val data: T? = null,
     val error: Throwable? = null
 )

@@ -102,7 +102,11 @@ class NfcHelper(
                     NfcAdapter.FLAG_READER_NFC_A or NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK,
                     null
                 )
+            } else {
+                Log.e(LOG_TAG, "NFC is not enabled")
             }
+        }.onFailure {
+            Log.e(LOG_TAG, "Error starting NFC reader", it)
         }
     }
 

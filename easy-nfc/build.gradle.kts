@@ -1,6 +1,6 @@
 plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
+    id("internal-android-library")
+    id("internal-publish")
 }
 
 android {
@@ -8,11 +8,11 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.livedata)
-    implementation(libs.androidx.lifecycle.process)
-    implementation(libs.androidx.lifecycle.runtime)
-    implementation(libs.material)
-    testImplementation(libs.junit)
+    implementation(libraries.androidx.appcompat)
+    implementation(libraries.androidx.core.ktx)
+    implementation(libraries.androidx.lifecycle.livedata)
+    implementation(libraries.androidx.lifecycle.process)
+    implementation(libraries.androidx.lifecycle.runtime)
+    implementation(libraries.material)
+    testImplementation(libraries.junit)
 }
