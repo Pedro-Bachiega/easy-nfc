@@ -5,8 +5,8 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.pedrobneto.easynfc.initiator.NfcBridge
+import com.pedrobneto.easynfc.initiator.NfcDataStream
 import com.pedrobneto.easynfc.initiator.NfcHelper
-import com.pedrobneto.easynfc.initiator.DataStreamStatus
 import com.pedrobneto.sample.easynfc.R
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -19,7 +19,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
 
     private var nfcHelper = NfcHelper("F0394148148100")
 
-    private val statusList = mutableSetOf<DataStreamStatus>()
+    private val statusList = mutableSetOf<NfcDataStream.Status>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
