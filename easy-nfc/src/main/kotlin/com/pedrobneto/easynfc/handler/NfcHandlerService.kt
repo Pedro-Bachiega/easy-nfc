@@ -38,8 +38,8 @@ abstract class NfcHandlerService : HostApduService() {
 
         scope.launch {
             runCatching {
-                val contentLength = commandApdu[4]
-                composedContent += commandApdu.copyOfRange(5, 5 + contentLength)
+                // Byte 5 is the content length, so we can ignore
+                composedContent += commandApdu.takeLast(commandApdu.size - 5)
 
                 if (!needMoreData) {
                     onCommandReceived(clazz, instruction, parameter1, parameter2, composedContent)

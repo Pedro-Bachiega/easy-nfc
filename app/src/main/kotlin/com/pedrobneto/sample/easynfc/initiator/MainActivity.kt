@@ -26,7 +26,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
 
         nfcHelper.setOnTagReadListener(::onTagReadListener)
             .setOnStartReading { labelNfcStatus.text = "NFC Reader: Reading" }
-            .setOnStopReading { labelNfcStatus.text = "NFC Reader: Stopgitped" }
+            .setOnStopReading { labelNfcStatus.text = "NFC Reader: Stopped" }
     }
 
     override fun onStart() {
