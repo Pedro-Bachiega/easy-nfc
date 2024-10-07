@@ -17,3 +17,18 @@ internal val String.asByteArray: ByteArray
             .map { "${it.first}${it.second}".toInt(radix = 16).toByte() }
             .toByteArray()
     }
+
+@OptIn(ExperimentalStdlibApi::class)
+internal fun Int.toByteArray(size: Int): ByteArray {
+    val expectedStringSize = size * 2
+    val hexString = this.toHexString(format = HexFormat.UpperCase)
+
+    return when {
+        hexString.length == expectedStringSize -> hexString.asByteArray
+        hexString.length < expectedStringSize -> {
+            hexString.padStart(expectedStringSize, '0').asByteArray
+        }
+
+        else -> error("Content length must not exceed $size bytes")
+    }
+}

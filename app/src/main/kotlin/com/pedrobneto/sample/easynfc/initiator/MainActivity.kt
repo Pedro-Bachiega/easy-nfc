@@ -7,6 +7,8 @@ import androidx.lifecycle.lifecycleScope
 import com.pedrobneto.easynfc.initiator.NfcBridge
 import com.pedrobneto.easynfc.initiator.NfcDataStream
 import com.pedrobneto.easynfc.initiator.NfcHelper
+import com.pedrobneto.easynfc.model.ApduCommand
+import com.pedrobneto.easynfc.model.ApduCommandHeader
 import com.pedrobneto.sample.easynfc.R
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -40,7 +42,11 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
     }
 
     private fun onTagReadListener(nfcBridge: NfcBridge) {
-        nfcBridge.sendData(content = "My first nfc enabled app").run {
+        val mockPixQRCode =
+            "00020101021126360014br.gov.bcb.pix0114+55119484444945204000053039865802BR5919PEDRO BACHIEGA NETO6009SAO PAULO622905251J8N7326A92QEA2C91T65TNFZ6304B630"
+        nfcBridge.sendData(
+            command = ApduCommand(header = ApduCommandHeader.writeBinary, content = mockPixQRCode)
+        ).run {
             liveData.observe(this@MainActivity) {
                 statusList += it.status
                 labelNfcLiveDataStatus.text =

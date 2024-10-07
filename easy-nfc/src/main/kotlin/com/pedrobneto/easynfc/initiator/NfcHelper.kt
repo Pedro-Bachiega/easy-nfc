@@ -61,11 +61,9 @@ class NfcHelper(
     override fun onStart(owner: LifecycleOwner) {
         super.onStart(owner)
         owner.activity?.run(::startReading)
-        onStartReadingListener?.invoke()
     }
 
     override fun onStop(owner: LifecycleOwner) {
-        onStopReadingListener?.invoke()
         owner.activity?.run(::stopReading)
         super.onStop(owner)
     }
@@ -91,6 +89,7 @@ class NfcHelper(
             return
         }
 
+        onStartReadingListener?.invoke()
         runCatching {
             nfcAdapter = (activity.getSystemService(Context.NFC_SERVICE) as? NfcManager)
                 ?.defaultAdapter
@@ -117,6 +116,7 @@ class NfcHelper(
      * @param activity The activity the reader is attached to.
      */
     fun stopReading(activity: Activity) {
+        onStopReadingListener?.invoke()
         runCatching { nfcAdapter?.disableReaderMode(activity) }
         nfcAdapter = null
     }
