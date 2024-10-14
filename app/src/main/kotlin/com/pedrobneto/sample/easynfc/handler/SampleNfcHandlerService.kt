@@ -3,6 +3,7 @@ package com.pedrobneto.sample.easynfc.handler
 import android.util.Log
 import android.widget.Toast
 import com.pedrobneto.easynfc.handler.NfcHandlerService
+import com.pedrobneto.easynfc.model.ApduCommandHeader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -16,16 +17,12 @@ class SampleNfcHandlerService : NfcHandlerService() {
     private val multipartParameter1 = 0x00.toByte()
     private val multipartParameter2 = 0x01.toByte()
 
-    override fun needMoreData(instruction: Byte, parameter1: Byte, parameter2: Byte): Boolean =
-        instruction == multipartInstruction && parameter1 == multipartParameter1 && parameter2 == multipartParameter2
+    override fun needMoreData(header: ApduCommandHeader): Boolean =
+        header.instruction == multipartInstruction
+                && header.parameter1 == multipartParameter1
+                && header.parameter2 == multipartParameter2
 
-    override fun onCommandReceived(
-        clazz: Byte,
-        instruction: Byte,
-        parameter1: Byte,
-        parameter2: Byte,
-        content: String
-    ) {
+    override fun onCommandReceived(header: ApduCommandHeader, content: String) {
         // Do something with the content
         Log.d("SampleNfcHandlerService", "Received from nfc reader:\n$content")
 
