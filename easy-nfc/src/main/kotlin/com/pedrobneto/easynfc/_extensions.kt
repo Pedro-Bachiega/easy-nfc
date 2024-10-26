@@ -21,7 +21,12 @@ internal val String.asByteArray: ByteArray
 @OptIn(ExperimentalStdlibApi::class)
 internal fun Int.toByteArray(size: Int): ByteArray {
     val expectedStringSize = size * 2
-    val hexString = this.toHexString(format = HexFormat.UpperCase)
+    val hexString = this.toHexString(
+        format = HexFormat {
+            upperCase = true
+            number { removeLeadingZeros = true }
+        }
+    )
 
     return when {
         hexString.length == expectedStringSize -> hexString.asByteArray

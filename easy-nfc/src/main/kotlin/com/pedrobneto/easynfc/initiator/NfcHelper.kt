@@ -75,6 +75,7 @@ class NfcHelper(
 
     private fun onTagRead(tag: Tag) {
         runCatching { onTagReadListener?.invoke(NfcBridge(aid = aid, tag = tag, scope = scope)) }
+            .onFailure { Log.e(LOG_TAG, "Failed after tag connected", it) }
     }
 
     /**
