@@ -28,6 +28,45 @@ class NfcBridge private constructor(
     }
 
     /**
+     * Send multiple commands to the NFC device in order and transform its result.
+     *
+     * @param commands The command list to be executed in order along with its transformation
+     * @param aid The AID of the NFC device - Defaults to the aid provided to the NfcHelper
+     * @param acceptEmpty Whether to accept an empty response or consider it an error
+     */
+    fun <T : Any> sendCommandsTransforming(
+        commands: List<Pair<ApduCommand, (ByteArray) -> T>>,
+        aid: ByteArray = this.aid,
+        acceptEmpty: Boolean = false,
+    ) = onConnection(aid = aid) {
+        commands.map { (command, transformation) ->
+            val result = command.executeOnTag(isoDep)
+            when {
+                result.isSuccess -> transformation.invoke(result)
+                acceptEmpty && result.isEmpty() -> transformation.invoke(byteArrayOf())
+                else -> error("Command failed")
+            }
+        }
+    }
+
+    /**
+     * Send multiple commands to the NFC device in order.
+     *
+     * @param commands The command list to be executed in order
+     * @param aid The AID of the NFC device - Defaults to the aid provided to the NfcHelper
+     * @param acceptEmpty Whether to accept an empty response or consider it an error
+     */
+    fun sendCommands(
+        commands: List<ApduCommand>,
+        aid: ByteArray = this.aid,
+        acceptEmpty: Boolean = false
+    ) = sendCommandsTransforming(
+        commands = commands.map { command -> command to { it } },
+        aid = aid,
+        acceptEmpty = acceptEmpty
+    )
+
+    /**
      * Send a command to the NFC device.
      *
      * @param command The command to be executed
@@ -40,14 +79,11 @@ class NfcBridge private constructor(
         aid: ByteArray = this.aid,
         acceptEmpty: Boolean = false,
         transformResult: (ByteArray) -> T
-    ) = onConnection(aid = aid, transformResult = transformResult) {
-        val result = command.executeOnTag(isoDep)
-        when {
-            result.isSuccess -> result
-            acceptEmpty && result.isEmpty() -> byteArrayOf()
-            else -> error("Command failed")
-        }
-    }
+    ) = sendCommandsTransforming(
+        commands = listOf(command to transformResult),
+        aid = aid,
+        acceptEmpty = acceptEmpty
+    )
 
     /**
      * Send a command to the NFC device.
@@ -60,7 +96,7 @@ class NfcBridge private constructor(
         command: ApduCommand,
         aid: ByteArray = this.aid,
         acceptEmpty: Boolean = false,
-    ) = sendData(command = command, aid = aid, acceptEmpty = acceptEmpty, transformResult = {})
+    ) = sendData(command = command, aid = aid, acceptEmpty = acceptEmpty, transformResult = { it })
 
     /**
      * Send a command to the NFC device passing a ByteArray content.
@@ -97,7 +133,7 @@ class NfcBridge private constructor(
         content = content,
         aid = aid,
         acceptEmpty = acceptEmpty,
-        transformResult = {}
+        transformResult = { it }
     )
 
     /**
@@ -135,13 +171,10 @@ class NfcBridge private constructor(
         content = content,
         aid = aid,
         acceptEmpty = acceptEmpty,
-        transformResult = {}
+        transformResult = { it }
     )
 
-    private fun <T> onConnection(
-        aid: ByteArray,
-        transformResult: (ByteArray) -> T,
-        func: (IsoDep) -> ByteArray
-    ) = NfcDataStream<T>(initialValue = NfcResult(status = NfcDataStream.Status.CONNECTING))
-        .connect(scope, isoDep, { selectAid(aid) }, transformResult, func)
+    private fun <T> onConnection(aid: ByteArray, func: (IsoDep) -> T) =
+        NfcDataStream<T>(initialValue = NfcResult(status = NfcDataStream.Status.CONNECTING))
+            .connect(scope, isoDep, { selectAid(aid) }, func)
 }

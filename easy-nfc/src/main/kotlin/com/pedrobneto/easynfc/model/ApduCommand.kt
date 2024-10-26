@@ -87,8 +87,7 @@ class ApduCommand(private val content: ByteArray) {
         parameter2 = parameter2,
         fullContent = byteArrayOf(
             *contentSize.toByteArray(size = 1),
-            *content,
-            expectedResponseByteSize
+            *content + listOfNotNull(expectedResponseByteSize.takeIf { it != 0x00.toByte() })
         )
     )
 
@@ -109,8 +108,7 @@ class ApduCommand(private val content: ByteArray) {
         header = header,
         fullContent = byteArrayOf(
             *contentSize.toByteArray(size = 1),
-            *content,
-            expectedResponseByteSize
+            *content + listOfNotNull(expectedResponseByteSize.takeIf { it != 0x00.toByte() })
         )
     )
 

@@ -25,8 +25,7 @@ class NfcDataStream<T> internal constructor(initialValue: NfcResult<T>) {
         scope: CoroutineScope,
         isoDep: IsoDep,
         selectAid: () -> Unit,
-        transformResult: (ByteArray) -> T,
-        func: (IsoDep) -> ByteArray
+        func: (IsoDep) -> T
     ) = apply {
         scope.launch {
             runCatching {
@@ -41,15 +40,15 @@ class NfcDataStream<T> internal constructor(initialValue: NfcResult<T>) {
 
                 selectAid()
 
-                val data = func(isoDep).let(transformResult)
+                val data = func(isoDep)
+                isoDep.close()
                 Log.d(LOG_TAG, "Closed")
                 emit(NfcResult(status = Status.CLOSED, data = data))
             }.onFailure {
+                isoDep.close()
                 Log.e(LOG_TAG, "Closed with error: ${it.message}", it)
                 emit(NfcResult(status = Status.CLOSED_WITH_ERROR, error = it))
             }
-
-            isoDep.close()
         }
     }
 
