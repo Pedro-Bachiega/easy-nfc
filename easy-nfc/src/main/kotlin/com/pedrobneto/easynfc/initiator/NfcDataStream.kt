@@ -11,6 +11,11 @@ import kotlinx.coroutines.launch
 
 private const val LOG_TAG = "NfcDataStream"
 
+/**
+ * A class responsible for giving you results based on your connection and command execution
+ *
+ * @see NfcResult
+ */
 class NfcDataStream<T> internal constructor(initialValue: NfcResult<T>) {
 
     private val _flow = MutableStateFlow(initialValue)
@@ -25,7 +30,7 @@ class NfcDataStream<T> internal constructor(initialValue: NfcResult<T>) {
         scope: CoroutineScope,
         isoDep: IsoDep,
         selectAid: () -> Unit,
-        func: (IsoDep) -> T
+        func: (tag: IsoDep) -> T
     ) = apply {
         scope.launch {
             runCatching {

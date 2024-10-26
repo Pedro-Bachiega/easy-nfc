@@ -3,7 +3,9 @@ package com.pedrobneto.easynfc.handler
 import android.nfc.cardemulation.HostApduService
 import android.os.Bundle
 import android.util.Log
+import com.pedrobneto.easynfc.model.ApduCommand
 import com.pedrobneto.easynfc.model.ApduCommandHeader
+import com.pedrobneto.easynfc.model.plus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -11,29 +13,47 @@ import kotlinx.coroutines.launch
 
 private const val LOG_TAG = "NfcHandlerService"
 
+/**
+ * A base service class that will handle all operations and give you the final content
+ *
+ * @see com.pedrobneto.easynfc.initiator.NfcHelper
+ */
 abstract class NfcHandlerService : HostApduService() {
 
     private val job = SupervisorJob()
     protected val scope = CoroutineScope(Dispatchers.IO + job)
 
+    /**
+     * The default success response as a [ByteArray]
+     */
     protected val successResult: ByteArray get() = byteArrayOf(0x90.toByte(), 0x00.toByte())
 
-    private var composedContent: ByteArray = byteArrayOf()
+    private var composedCommand: ApduCommand? = null
 
+    /**
+     * The root function where we receive the command from the reader
+     *
+     * This method is called in the main thread. DO NOT take long processing and responding.
+     *
+     * @see onDeactivated If you want to handle the service deactivation
+     * @see onCommandReceived For handling the processed content
+     * @see needMoreData To tell if we're dealing with a multi-part content
+     * @see onNeedMoreData To answer the question "Do we need more data?" to the reader. Defaults to `[0x90, 0x00]`
+     */
     override fun processCommandApdu(commandApdu: ByteArray, extras: Bundle?): ByteArray? {
-        val header = ApduCommandHeader.fromByteArray(commandApdu)
+        val command = ApduCommand(commandApdu)
+        val header = command.header
         if (header == ApduCommandHeader.selectAid) return successResult
 
         val needMoreData = needMoreData(header)
 
         scope.launch {
             runCatching {
-                // Byte 5 is the content length, so we can ignore
-                composedContent += commandApdu.takeLast(commandApdu.size - 5)
+                composedCommand += command
 
                 if (!needMoreData) {
-                    onCommandReceived(header, composedContent)
-                    composedContent = byteArrayOf()
+                    onCommandReceived(composedCommand!!)
+                    composedCommand = null
                 }
             }.onFailure {
                 Log.e(LOG_TAG, "Error processing command", it)
@@ -53,12 +73,14 @@ abstract class NfcHandlerService : HostApduService() {
      * slice it to multiple parts before sending.
      *
      * This method is called in the main thread. DO NOT take long processing and responding.
+     *
+     * @param header The command header
      */
-    abstract fun needMoreData(header: ApduCommandHeader): Boolean
+    open fun needMoreData(header: ApduCommandHeader): Boolean = false
 
     /**
      * This method answers the question "Do we need more data?" to the reader.
-     * Default response is "[0x90, 0x00]" which means success
+     * Default response is `[0x90, 0x00]` which means success
      *
      * This method is called in the main thread. DO NOT take long processing and responding.
      */
@@ -68,20 +90,7 @@ abstract class NfcHandlerService : HostApduService() {
      * Implement this method whenever you want to deal with the content as a ByteArray.
      * This method will be called in the IO thread.
      *
-     * @param header The command header
-     * @param content The content of the command
+     * @param apduCommand The command object with custom getters for ease of use :)
      */
-    open fun onCommandReceived(header: ApduCommandHeader, content: ByteArray) =
-        onCommandReceived(header, content.decodeToString())
-
-    /**
-     * Implement this method whenever you want to deal with the content as a String.
-     * This method will be called in the IO thread.
-     *
-     * @param header The command header
-     * @param content The content of the command
-     */
-    open fun onCommandReceived(header: ApduCommandHeader, content: String) {
-        error("You must implement 'onCommandReceived' for either String OR ByteArray content")
-    }
+    abstract fun onCommandReceived(apduCommand: ApduCommand)
 }

@@ -14,11 +14,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 private const val LOG_TAG = "NfcAdapter"
 
 /**
- * A class to help you easily transfer data between NFC enabled devices.
+ * A class designed to help you easily transfer data between NFC enabled devices.
  *
  * @param aid The AID (application id) of the target NFC device.
  * @param lifecycleOwner The lifecycle owner to attach the reader to. If null, the reader will not be attached.
@@ -74,8 +75,11 @@ class NfcHelper(
     }
 
     private fun onTagRead(tag: Tag) {
-        runCatching { onTagReadListener?.invoke(NfcBridge(aid = aid, tag = tag, scope = scope)) }
-            .onFailure { Log.e(LOG_TAG, "Failed after tag connected", it) }
+        runCatching {
+            scope.launch(Dispatchers.Main) {
+                onTagReadListener?.invoke(NfcBridge(aid = aid, tag = tag, scope = scope))
+            }
+        }.onFailure { Log.e(LOG_TAG, "Failed after tag connected", it) }
     }
 
     /**

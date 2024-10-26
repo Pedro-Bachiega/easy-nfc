@@ -1,33 +1,31 @@
 package com.pedrobneto.sample.easynfc.handler
 
+import android.content.Intent
 import android.util.Log
-import android.widget.Toast
 import com.pedrobneto.easynfc.handler.NfcHandlerService
+import com.pedrobneto.easynfc.model.ApduCommand
 import com.pedrobneto.easynfc.model.ApduCommandHeader
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import com.pedrobneto.sample.easynfc.initiator.ReceiverActivity
 
-class SampleNfcHandlerService : NfcHandlerService() {
+internal class SampleNfcHandlerService : NfcHandlerService() {
 
-    // Just set whatever byte you want as instruction, you'll only need to use it if you use multipart content
-    // If not using, just override
-    private val multipartInstruction = 0x10.toByte()
-
-    // "[0x00, 0x01]" will mean we have more data to receive, "[0x00, 0x00]" will mean we're done
-    private val multipartParameter1 = 0x00.toByte()
-    private val multipartParameter2 = 0x01.toByte()
-
+    // Just set whatever condition you want, you'll only need to use it if you use multipart content
+    // In this case, we'll consider we're waiting for more content ONLY if the header is a update binary header
+    // If not using, just don't override
     override fun needMoreData(header: ApduCommandHeader): Boolean =
-        header.instruction == multipartInstruction
-                && header.parameter1 == multipartParameter1
-                && header.parameter2 == multipartParameter2
+        header == ApduCommandHeader.updateBinary
 
-    override fun onCommandReceived(header: ApduCommandHeader, content: String) {
+    override fun onCommandReceived(command: ApduCommand) {
+        val content = command.dataString
+
         // Do something with the content
         Log.d("SampleNfcHandlerService", "Received from nfc reader:\n$content")
 
-        scope.launch(Dispatchers.Main) {
-            Toast.makeText(this@SampleNfcHandlerService, content, Toast.LENGTH_SHORT).show()
-        }
+        startActivity(
+            Intent(this, ReceiverActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                .putExtra(ReceiverActivity.EXTRA_NFC_DATA, content)
+        )
     }
 }

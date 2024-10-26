@@ -2,7 +2,8 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:paddingHorizontal="16dp">
 
     <TextView
         android:id="@+id/label_nfc_status"
@@ -29,7 +30,24 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:text="NFC tag status: FLOW_CLOSED"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/label_nfc_content"
         app:layout_constraintTop_toBottomOf="@id/label_nfc_live_data_status" />
+
+    <TextView
+        android:id="@+id/label_nfc_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:gravity="start"
+        android:text="Every newline will be handled as a new command so you can test if you're receiving the correct composed data"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/label_nfc_flow_status" />
+
+    <EditText
+        android:id="@+id/input_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Content to send through NFC"
+        app:layout_constraintTop_toBottomOf="@id/label_nfc_content" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
