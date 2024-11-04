@@ -16,7 +16,7 @@ internal class SampleNfcHandlerService : NfcHandlerService() {
         header == ApduCommandHeader.updateBinary
 
     override fun onCommandReceived(command: ApduCommand) {
-        val content = command.dataString
+        val content = command.getDataAsString()
 
         // Do something with the content
         Log.d("SampleNfcHandlerService", "Received from nfc reader:\n$content")

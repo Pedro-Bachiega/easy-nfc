@@ -3,6 +3,7 @@
 package com.pedrobneto.easynfc.model
 
 import android.nfc.tech.IsoDep
+import androidx.annotation.IntRange
 import com.pedrobneto.easynfc.asByteArray
 import com.pedrobneto.easynfc.toByteArray
 
@@ -12,13 +13,7 @@ import com.pedrobneto.easynfc.toByteArray
  *
  * @param content The content of the command
  */
-class ApduCommand(private val content: ByteArray) {
-
-    val header: ApduCommandHeader get() = ApduCommandHeader.fromByteArray(content)
-    val dataSize: Byte get() = content[4]
-    val data: ByteArray get() = content.sliceArray(5 until 5 + dataSize)
-    val dataString: String get() = data.decodeToString()
-    val expectedResponseSize: Byte get() = content.last()
+class ApduCommand(val content: ByteArray) {
 
     /**
      * Create a command passing a [ByteArray] content.
@@ -73,7 +68,6 @@ class ApduCommand(private val content: ByteArray) {
      * @param parameter2 The fourth [Byte] of the command - Defaults to 0x00
      * @param content The content of the command
      * @param contentSize The length of the content
-     * @param expectedResponseByteSize The expected length of the response - Defaults to 0x00
      */
     constructor(
         clazz: Byte = 0x80.toByte(),
@@ -82,17 +76,12 @@ class ApduCommand(private val content: ByteArray) {
         parameter2: Byte = 0x00,
         content: ByteArray,
         contentSize: Int,
-        expectedResponseByteSize: Byte = 0x00,
     ) : this(
         clazz = clazz,
         instruction = instruction,
         parameter1 = parameter1,
         parameter2 = parameter2,
-        fullContent = byteArrayOf(
-            *contentSize.toByteArray(size = 1),
-            *content,
-            expectedResponseByteSize
-        )
+        fullContent = byteArrayOf(*contentSize.toByteArray(1, 3), *content)
     )
 
     /**
@@ -101,20 +90,14 @@ class ApduCommand(private val content: ByteArray) {
      * @param header The predetermined header for this command
      * @param content The content of the command
      * @param contentSize The length of the content
-     * @param expectedResponseByteSize The expected length of the response - Defaults to 0x00
      */
     constructor(
         header: ApduCommandHeader,
         content: ByteArray,
         contentSize: Int,
-        expectedResponseByteSize: Byte = 0x00,
     ) : this(
         header = header,
-        fullContent = byteArrayOf(
-            *contentSize.toByteArray(size = 1),
-            *content,
-            expectedResponseByteSize
-        )
+        fullContent = byteArrayOf(*contentSize.toByteArray(1, 3), *content)
     )
 
     /**
@@ -122,19 +105,59 @@ class ApduCommand(private val content: ByteArray) {
      *
      * @param hexString The [Byte] string of the command header
      * @param content The content of the command
-     * @param expectedResponseByteSize The expected length of the response - Defaults to 0x00
      */
     constructor(
         hexString: String,
         content: ByteArray,
         contentSize: Int,
-        expectedResponseByteSize: Byte = 0x00,
     ) : this(
-        header = ApduCommandHeader.fromHexString(hexString),
+        header = ApduCommandHeader.from(hexString),
         content = content,
-        contentSize = contentSize,
-        expectedResponseByteSize = expectedResponseByteSize
+        contentSize = contentSize
     )
+
+    /**
+     * Returns the command's header.
+     *
+     * @return The command's header as a [ApduCommandHeader]
+     */
+    fun getHeader(): ApduCommandHeader = ApduCommandHeader.from(content)
+
+    /**
+     * Returns the command's data length.
+     *
+     * @param dataLengthByteQuantity The quantity of bytes representing the data length - Defaults to 1
+     *
+     * @return The command's data length as a [ByteArray]
+     */
+    fun getDataSize(@IntRange(from = 1) dataLengthByteQuantity: Int = 1): ByteArray =
+        if (dataLengthByteQuantity > 1) {
+            content.sliceArray(4..dataLengthByteQuantity - 1)
+        } else {
+            byteArrayOf(content[4])
+        }
+
+    /**
+     * Returns the command's data.
+     *
+     * @param dataLengthByteQuantity The quantity of bytes representing the data length - Defaults to 1
+     *
+     * @return The command's data as a [ByteArray]
+     */
+    fun getData(@IntRange(from = 1) dataLengthByteQuantity: Int = 1): ByteArray {
+        val length: ByteArray = getDataSize(dataLengthByteQuantity)
+        return content.sliceArray(4 + dataLengthByteQuantity..length.sum())
+    }
+
+    /**
+     * Returns the command's data as a [String].
+     *
+     * @param dataLengthByteQuantity The quantity of bytes representing the data length - Defaults to 1
+     *
+     * @return The command's data as a [String]
+     */
+    fun getDataAsString(dataLengthByteQuantity: Int = 1): String =
+        getData(dataLengthByteQuantity).decodeToString()
 
     /**
      * Executes the given command on the given [IsoDep] tag.
@@ -154,15 +177,13 @@ class ApduCommand(private val content: ByteArray) {
          * @param parameter1 The third [Byte] of the command - Defaults to 0x00
          * @param parameter2 The fourth [Byte] of the command - Defaults to 0x00
          * @param content The content of the command
-         * @param expectedResponseByteSize The expected length of the response - Defaults to 0x00
          */
         operator fun invoke(
             clazz: Byte = 0x80.toByte(),
             instruction: Byte = 0x04,
             parameter1: Byte = 0x00,
             parameter2: Byte = 0x00,
-            content: String,
-            expectedResponseByteSize: Byte = 0x00,
+            content: String
         ): ApduCommand = content.encodeToByteArray().let {
             ApduCommand(
                 clazz = clazz,
@@ -170,8 +191,7 @@ class ApduCommand(private val content: ByteArray) {
                 parameter1 = parameter1,
                 parameter2 = parameter2,
                 content = it,
-                contentSize = it.size,
-                expectedResponseByteSize = expectedResponseByteSize
+                contentSize = it.size
             )
         }
 
@@ -180,18 +200,15 @@ class ApduCommand(private val content: ByteArray) {
          *
          * @param header The predetermined header for this command
          * @param content The content of the command
-         * @param expectedResponseByteSize The expected length of the response - Defaults to 0x00
          */
         operator fun invoke(
             header: ApduCommandHeader,
-            content: String,
-            expectedResponseByteSize: Byte = 0x00,
+            content: String
         ): ApduCommand = content.encodeToByteArray().let {
             ApduCommand(
                 header = header,
                 content = it,
-                contentSize = it.size,
-                expectedResponseByteSize = expectedResponseByteSize
+                contentSize = it.size
             )
         }
 
@@ -205,12 +222,7 @@ class ApduCommand(private val content: ByteArray) {
         operator fun invoke(
             hexString: String,
             content: String,
-            expectedResponseByteSize: Byte = 0x00
-        ): ApduCommand = invoke(
-            header = ApduCommandHeader.fromHexString(hexString),
-            content = content,
-            expectedResponseByteSize = expectedResponseByteSize
-        )
+        ): ApduCommand = invoke(header = ApduCommandHeader.from(hexString), content = content)
     }
 }
 
@@ -233,7 +245,7 @@ fun SelectAidCommand(aid: ByteArray): ApduCommand = ApduCommand(
 fun SelectAidCommand(aid: String): ApduCommand = SelectAidCommand(aid.asByteArray)
 
 /**
- * Merges two commands, keeping the second command's header and expected response size.
+ * Merges two commands, keeping the second command's header.
  * If the first command is null, returns the second command,
  *
  * @param other The other command to be combined with
@@ -243,9 +255,8 @@ fun SelectAidCommand(aid: String): ApduCommand = SelectAidCommand(aid.asByteArra
 operator fun ApduCommand?.plus(other: ApduCommand): ApduCommand {
     if (this == null) return other
     return ApduCommand(
-        header = other.header,
-        content = data + other.data,
-        contentSize = dataSize + other.dataSize,
-        expectedResponseByteSize = other.expectedResponseSize
+        header = other.getHeader(),
+        content = getData() + other.getData(),
+        contentSize = getDataSize().sum() + other.getDataSize().sum()
     )
 }

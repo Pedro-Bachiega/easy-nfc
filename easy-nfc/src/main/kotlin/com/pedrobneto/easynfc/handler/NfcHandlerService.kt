@@ -42,14 +42,14 @@ abstract class NfcHandlerService : HostApduService() {
      */
     override fun processCommandApdu(commandApdu: ByteArray, extras: Bundle?): ByteArray? {
         val command = ApduCommand(commandApdu)
-        val header = command.header
+        val header = command.getHeader()
         if (header == ApduCommandHeader.selectAid) return successResult
 
         val needMoreData = needMoreData(header)
 
         scope.launch {
             runCatching {
-                composedCommand += command
+                composedCommand = composedCommand?.let { onMergeCommands(it, command) } ?: command
 
                 if (!needMoreData) {
                     onCommandReceived(composedCommand!!)
@@ -80,11 +80,26 @@ abstract class NfcHandlerService : HostApduService() {
 
     /**
      * This method answers the question "Do we need more data?" to the reader.
-     * Default response is `[0x90, 0x00]` which means success
+     * The default response is `[0x90, 0x00]` which means success
      *
      * This method is called in the main thread. DO NOT take long processing and responding.
+     *
+     * @see [successResult]
      */
     open fun onNeedMoreData(): ByteArray = successResult
+
+    /**
+     * This method is responsible for merging 2 commands whenever a composition is needed.
+     * The default response is the sum of the 2 commands using the implemented operator [com.pedrobneto.easynfc.model.plus].
+     * Override if you need a custom treatment whenever you're handling a multi-part content.
+     *
+     * @param current The current command being stored and waiting for the next part
+     * @param next The next part of the content
+     *
+     * @return The merged commands
+     */
+    open fun onMergeCommands(current: ApduCommand, next: ApduCommand): ApduCommand =
+        current + next
 
     /**
      * Implement this method whenever you want to deal with the content as a ByteArray.

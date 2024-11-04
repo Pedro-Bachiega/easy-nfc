@@ -6,7 +6,7 @@ data class ApduCommandHeader(
     val parameter1: Byte,
     val parameter2: Byte,
 ) {
-    companion object DefaultHeaders {
+    companion object {
         val selectAid: ApduCommandHeader
             get() = ApduCommandHeader(
                 clazz = 0x00,
@@ -31,22 +31,16 @@ data class ApduCommandHeader(
                 parameter2 = 0x00
             )
 
-        fun fromHexString(hexString: String): ApduCommandHeader =
-            hexString.encodeToByteArray().let {
-                ApduCommandHeader(
-                    clazz = it[0],
-                    instruction = it[1],
-                    parameter1 = it[2],
-                    parameter2 = it[3]
-                )
-            }
-
-        fun fromByteArray(byteArray: ByteArray): ApduCommandHeader =
+        fun from(byteArray: ByteArray): ApduCommandHeader =
             ApduCommandHeader(
                 clazz = byteArray[0],
                 instruction = byteArray[1],
                 parameter1 = byteArray[2],
                 parameter2 = byteArray[3]
             )
+
+        fun from(hexString: String): ApduCommandHeader =
+            from(hexString.encodeToByteArray())
     }
+
 }
