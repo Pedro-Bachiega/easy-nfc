@@ -1,6 +1,8 @@
 package com.pedrobneto.easynfc
 
 import androidx.annotation.IntRange
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 /**
  * Creates a [ByteArray] from the given [String].
@@ -24,48 +26,33 @@ val String.asByteArray: ByteArray
     }
 
 /**
+ * Converts the given [ByteArray] to an [Int].
+ */
+val ByteArray.asInt: Int
+    get() = when {
+        size == Byte.SIZE_BYTES -> first().toInt()
+        size in Short.SIZE_BYTES until Int.SIZE_BYTES -> ByteBuffer.wrap(this).getShort().toInt()
+        size >= Int.SIZE_BYTES -> ByteBuffer.wrap(this).getInt()
+        else -> error("ByteArray is empty")
+    }
+
+/**
  * Converts the given [Int] to a [ByteArray] of the given size.
  *
  * Examples:
  * 0.toByteArray(1) -> `[0x00]`
- * 300.toByteArray(1, 2) -> `[0x01, 0x2C]`
- * 300.toByteArray(1, 3) -> `[0x00, 0x01, 0x2C]`
+ * 300.toByteArray(2) -> `[0x01, 0x2C]`
+ * 300.toByteArray(3) -> `[0x00, 0x01, 0x2C]`
  * 300.toByteArray(1) -> throws IllegalStateException because 300 converted to a byte array
  * exceeds the given max byte size
  */
-@OptIn(ExperimentalStdlibApi::class)
-@Throws(IllegalStateException::class)
-fun Int.toByteArray(@IntRange(from = 1) vararg acceptableSizes: Int): ByteArray {
-    val hexString = this.toHexString(
-        format = HexFormat {
-            upperCase = true
-            number { removeLeadingZeros = true }
-        }
-    )
+fun Int.toByteArray(@IntRange(from = 1) size: Int = Int.SIZE_BYTES): ByteArray = when {
+    size == Byte.SIZE_BYTES -> byteArrayOf(this.toByte())
+    size in Short.SIZE_BYTES until Int.SIZE_BYTES -> ByteBuffer.allocate(size)
+        .order(ByteOrder.BIG_ENDIAN).putShort(this.toShort()).array()
 
-    val acceptableStringSizes = acceptableSizes.map { it * 2 }
-    val minAcceptableStringSize = acceptableStringSizes.min()
+    size >= Int.SIZE_BYTES -> ByteBuffer.allocate(size).order(ByteOrder.BIG_ENDIAN).putInt(this)
+        .array()
 
-    return when {
-        hexString.length in acceptableStringSizes -> hexString.asByteArray
-
-        hexString.length < minAcceptableStringSize -> {
-            hexString.padStart(minAcceptableStringSize, '0').asByteArray
-        }
-
-        else -> {
-            acceptableStringSizes.forEach {
-                if (it > hexString.length) return hexString.padStart(it, '0').asByteArray
-            }
-
-            val maxAcceptableStringSize = acceptableStringSizes.max()
-            error(
-                "Content length must not exceed ${maxAcceptableStringSize / 2} bytes. " +
-                        "Expected size: 0x00 ~ 0x${
-                            String().padEnd(maxAcceptableStringSize, 'F')
-                        }, " +
-                        "actual size: 0x$hexString"
-            )
-        }
-    }
+    else -> error("ByteArray size '$size' can not be less than 1")
 }

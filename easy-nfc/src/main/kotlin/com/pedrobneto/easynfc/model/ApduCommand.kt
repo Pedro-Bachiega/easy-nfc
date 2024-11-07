@@ -5,6 +5,7 @@ package com.pedrobneto.easynfc.model
 import android.nfc.tech.IsoDep
 import androidx.annotation.IntRange
 import com.pedrobneto.easynfc.asByteArray
+import com.pedrobneto.easynfc.asInt
 import com.pedrobneto.easynfc.toByteArray
 
 /**
@@ -68,6 +69,7 @@ class ApduCommand(val content: ByteArray) {
      * @param parameter2 The fourth [Byte] of the command - Defaults to 0x00
      * @param content The content of the command
      * @param contentSize The length of the content
+     * @param contentSizeByteLength The quantity of bytes representing the data length - Defaults to 1
      */
     constructor(
         clazz: Byte = 0x80.toByte(),
@@ -76,12 +78,13 @@ class ApduCommand(val content: ByteArray) {
         parameter2: Byte = 0x00,
         content: ByteArray,
         contentSize: Int,
+        contentSizeByteLength: Int = 1,
     ) : this(
         clazz = clazz,
         instruction = instruction,
         parameter1 = parameter1,
         parameter2 = parameter2,
-        fullContent = byteArrayOf(*contentSize.toByteArray(1, 3), *content)
+        fullContent = contentSize.toByteArray(contentSizeByteLength) + content
     )
 
     /**
@@ -90,14 +93,16 @@ class ApduCommand(val content: ByteArray) {
      * @param header The predetermined header for this command
      * @param content The content of the command
      * @param contentSize The length of the content
+     * @param contentSizeByteLength The quantity of bytes representing the data length - Defaults to 1
      */
     constructor(
         header: ApduCommandHeader,
         content: ByteArray,
         contentSize: Int,
+        contentSizeByteLength: Int = 1,
     ) : this(
         header = header,
-        fullContent = byteArrayOf(*contentSize.toByteArray(1, 3), *content)
+        fullContent = contentSize.toByteArray(contentSizeByteLength) + content
     )
 
     /**
@@ -105,15 +110,18 @@ class ApduCommand(val content: ByteArray) {
      *
      * @param hexString The [Byte] string of the command header
      * @param content The content of the command
+     * @param contentSizeByteLength The quantity of bytes representing the data length - Defaults to 1
      */
     constructor(
         hexString: String,
         content: ByteArray,
         contentSize: Int,
+        contentSizeByteLength: Int = 1,
     ) : this(
         header = ApduCommandHeader.from(hexString),
         content = content,
-        contentSize = contentSize
+        contentSize = contentSize,
+        contentSizeByteLength = contentSizeByteLength
     )
 
     /**
@@ -130,12 +138,12 @@ class ApduCommand(val content: ByteArray) {
      *
      * @return The command's data length as a [ByteArray]
      */
-    fun getDataSize(@IntRange(from = 1) dataLengthByteQuantity: Int = 1): ByteArray =
+    fun getDataSize(@IntRange(from = 1) dataLengthByteQuantity: Int = 1): Int =
         if (dataLengthByteQuantity > 1) {
-            content.sliceArray(4..dataLengthByteQuantity - 1)
+            content.sliceArray(4..4 + dataLengthByteQuantity - 1)
         } else {
             byteArrayOf(content[4])
-        }
+        }.asInt
 
     /**
      * Returns the command's data.
@@ -145,8 +153,8 @@ class ApduCommand(val content: ByteArray) {
      * @return The command's data as a [ByteArray]
      */
     fun getData(@IntRange(from = 1) dataLengthByteQuantity: Int = 1): ByteArray {
-        val length: ByteArray = getDataSize(dataLengthByteQuantity)
-        return content.sliceArray(4 + dataLengthByteQuantity..length.sum())
+        val length: Int = getDataSize(dataLengthByteQuantity)
+        return content.sliceArray(4 + dataLengthByteQuantity..length)
     }
 
     /**
@@ -177,13 +185,15 @@ class ApduCommand(val content: ByteArray) {
          * @param parameter1 The third [Byte] of the command - Defaults to 0x00
          * @param parameter2 The fourth [Byte] of the command - Defaults to 0x00
          * @param content The content of the command
+         * @param contentSizeByteLength The quantity of bytes representing the data length - Defaults to 1
          */
         operator fun invoke(
             clazz: Byte = 0x80.toByte(),
             instruction: Byte = 0x04,
             parameter1: Byte = 0x00,
             parameter2: Byte = 0x00,
-            content: String
+            content: String,
+            contentSizeByteLength: Int = 1
         ): ApduCommand = content.encodeToByteArray().let {
             ApduCommand(
                 clazz = clazz,
@@ -191,7 +201,8 @@ class ApduCommand(val content: ByteArray) {
                 parameter1 = parameter1,
                 parameter2 = parameter2,
                 content = it,
-                contentSize = it.size
+                contentSize = it.size,
+                contentSizeByteLength = contentSizeByteLength
             )
         }
 
@@ -200,15 +211,18 @@ class ApduCommand(val content: ByteArray) {
          *
          * @param header The predetermined header for this command
          * @param content The content of the command
+         * @param contentSizeByteLength The quantity of bytes representing the data length - Defaults to 1
          */
         operator fun invoke(
             header: ApduCommandHeader,
-            content: String
+            content: String,
+            contentSizeByteLength: Int = 1
         ): ApduCommand = content.encodeToByteArray().let {
             ApduCommand(
                 header = header,
                 content = it,
-                contentSize = it.size
+                contentSize = it.size,
+                contentSizeByteLength = contentSizeByteLength
             )
         }
 
@@ -217,12 +231,17 @@ class ApduCommand(val content: ByteArray) {
          *
          * @param hexString The [Byte] String of the command header
          * @param content The content of the command
-         * @param expectedResponseByteSize The expected length of the response - Defaults to 0x00
+         * @param contentSizeByteLength The quantity of bytes representing the data length - Defaults to 1
          */
         operator fun invoke(
             hexString: String,
             content: String,
-        ): ApduCommand = invoke(header = ApduCommandHeader.from(hexString), content = content)
+            contentSizeByteLength: Int = 1
+        ): ApduCommand = invoke(
+            header = ApduCommandHeader.from(hexString),
+            content = content,
+            contentSizeByteLength = contentSizeByteLength
+        )
     }
 }
 
@@ -257,6 +276,6 @@ operator fun ApduCommand?.plus(other: ApduCommand): ApduCommand {
     return ApduCommand(
         header = other.getHeader(),
         content = getData() + other.getData(),
-        contentSize = getDataSize().sum() + other.getDataSize().sum()
+        contentSize = getDataSize() + other.getDataSize()
     )
 }

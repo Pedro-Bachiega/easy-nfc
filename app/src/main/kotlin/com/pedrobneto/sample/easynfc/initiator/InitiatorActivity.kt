@@ -20,7 +20,7 @@ internal class InitiatorActivity : AppCompatActivity(R.layout.activity_initiator
     private val labelNfcFlowStatus: TextView by lazy { findViewById(R.id.label_nfc_flow_status) }
     private val inputNfcContent: EditText by lazy { findViewById(R.id.input_content) }
 
-    private var nfcHelper = NfcHelper("F0394148148100")
+    private var nfcHelper = NfcHelper(aid = "F0394148148100", lifecycleOwner = this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,16 +28,6 @@ internal class InitiatorActivity : AppCompatActivity(R.layout.activity_initiator
         nfcHelper.setOnTagReadListener(::onTagReadListener)
             .setOnStartReading { labelNfcStatus.text = "NFC Reader: Reading" }
             .setOnStopReading { labelNfcStatus.text = "NFC Reader: Stopped" }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        nfcHelper.startReading(this)
-    }
-
-    override fun onStop() {
-        nfcHelper.stopReading(this)
-        super.onStop()
     }
 
     private fun onTagReadListener(nfcBridge: NfcBridge) {
