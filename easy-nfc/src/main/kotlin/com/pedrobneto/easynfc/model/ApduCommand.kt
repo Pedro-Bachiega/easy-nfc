@@ -138,12 +138,14 @@ class ApduCommand(val content: ByteArray) {
      *
      * @return The command's data length as a [ByteArray]
      */
-    fun getDataSize(@IntRange(from = 1) dataLengthByteQuantity: Int = 1): Int =
-        if (dataLengthByteQuantity > 1) {
-            content.sliceArray(4..4 + dataLengthByteQuantity - 1)
+    fun getDataSize(@IntRange(from = 1) dataLengthByteQuantity: Int = 1): Int {
+        val lengthOffset = 4
+        return if (dataLengthByteQuantity > 1) {
+            content.sliceArray(lengthOffset..lengthOffset + dataLengthByteQuantity - 1)
         } else {
-            byteArrayOf(content[4])
+            byteArrayOf(content[lengthOffset])
         }.asInt
+    }
 
     /**
      * Returns the command's data.
@@ -154,7 +156,8 @@ class ApduCommand(val content: ByteArray) {
      */
     fun getData(@IntRange(from = 1) dataLengthByteQuantity: Int = 1): ByteArray {
         val length: Int = getDataSize(dataLengthByteQuantity)
-        return content.sliceArray(4 + dataLengthByteQuantity..length)
+        val offset = 4 + dataLengthByteQuantity
+        return content.sliceArray(offset..offset + length - 1)
     }
 
     /**
