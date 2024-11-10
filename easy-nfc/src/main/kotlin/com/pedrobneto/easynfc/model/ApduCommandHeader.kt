@@ -1,5 +1,7 @@
 package com.pedrobneto.easynfc.model
 
+import com.pedrobneto.easynfc.asByteArray
+
 data class ApduCommandHeader(
     val clazz: Byte,
     val instruction: Byte,
@@ -31,16 +33,14 @@ data class ApduCommandHeader(
                 parameter2 = 0x00
             )
 
-        fun from(byteArray: ByteArray): ApduCommandHeader =
-            ApduCommandHeader(
-                clazz = byteArray[0],
-                instruction = byteArray[1],
-                parameter1 = byteArray[2],
-                parameter2 = byteArray[3]
-            )
+        fun from(byteArray: ByteArray): ApduCommandHeader = ApduCommandHeader(
+            clazz = byteArray[0],
+            instruction = byteArray[1],
+            parameter1 = byteArray[2],
+            parameter2 = byteArray[3]
+        )
 
-        fun from(hexString: String): ApduCommandHeader =
-            from(hexString.encodeToByteArray())
+        fun from(hexString: String): ApduCommandHeader = from(hexString.asByteArray)
     }
 
 }

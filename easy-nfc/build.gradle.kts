@@ -8,11 +8,15 @@ android {
 }
 
 dependencies {
-    implementation(libraries.androidx.appcompat)
-    implementation(libraries.androidx.core.ktx)
-    implementation(libraries.androidx.lifecycle.livedata)
-    implementation(libraries.androidx.lifecycle.process)
-    implementation(libraries.androidx.lifecycle.runtime)
-    implementation(libraries.material)
-    testImplementation(libraries.junit)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.livedata)
+    implementation(libs.androidx.lifecycle.process)
+    implementation(libs.androidx.lifecycle.runtime)
+    implementation(libs.material)
+
+    testImplementation(libs.test.coroutines)
+    testImplementation(libs.test.junit)
+    testImplementation(libs.test.mockk)
+    testImplementation(libs.test.turbine)
 }

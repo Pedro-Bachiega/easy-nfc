@@ -115,6 +115,15 @@ class NfcHelper(
     }
 
     /**
+     * Registers the NFC helper with the lifecycle of the given LifecycleOwner.
+     *
+     * @param lifecycleOwner The lifecycle owner to attach the reader to
+     */
+    fun registerWithLifecycle(lifecycleOwner: LifecycleOwner) {
+        lifecycleOwner.lifecycle.addObserver(this)
+    }
+
+    /**
      * Stops the NFC reader.
      * Only call this if you want to force the reader to stop at a specific time that the lifecycle doesn't cover.
      *

@@ -16,7 +16,9 @@ private const val LOG_TAG = "NfcDataStream"
  *
  * @see NfcResult
  */
-class NfcDataStream<T> internal constructor(initialValue: NfcResult<T>) {
+class NfcDataStream<T> internal constructor(
+    initialValue: NfcResult<T> = NfcResult(status = Status.CONNECTING)
+) {
 
     private val _flow = MutableStateFlow(initialValue)
     val flow: Flow<NfcResult<T>> get() = _flow
@@ -29,7 +31,7 @@ class NfcDataStream<T> internal constructor(initialValue: NfcResult<T>) {
     internal fun connect(
         scope: CoroutineScope,
         isoDep: IsoDep,
-        selectAid: () -> Unit,
+        selectAid: suspend () -> Unit,
         func: (tag: IsoDep) -> T
     ) = apply {
         scope.launch {

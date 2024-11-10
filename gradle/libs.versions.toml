@@ -8,15 +8,18 @@ build-sdk-target = "35"
 build-tools = "35.0.0"
 
 # General
-androidx-lifecycle = "2.8.4"
+androidx-lifecycle = "2.8.7"
 appcompat = "1.7.0"
-constraintlayout = "2.1.4"
-core-ktx = "1.13.1"
+constraintlayout = "2.2.0"
+core-ktx = "1.15.0"
 detekt = "1.23.3"
 jacoco = "0.8.9"
 material = "1.12.0"
 # Test
-junit = "4.13.2"
+test-coroutines = "1.9.0"
+test-junit = "4.13.2"
+test-mockk = "1.13.13"
+test-turbine = "1.2.0"
 
 [libraries]
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
@@ -30,4 +33,7 @@ material = { group = "com.google.android.material", name = "material", version.r
 detekt-formatting = { group = "io.gitlab.arturbosch.detekt", name = "detekt-formatting", version.ref = "detekt" }
 
 # Test
-junit = { group = "junit", name = "junit", version.ref = "junit" }
+test-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "test-coroutines" }
+test-junit = { group = "junit", name = "junit", version.ref = "test-junit" }
+test-mockk = { group = "io.mockk", name = "mockk", version.ref = "test-mockk" }
+test-turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "test-turbine" }

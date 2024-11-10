@@ -28,9 +28,9 @@ class ApduCommand(val content: ByteArray) {
      */
     constructor(
         clazz: Byte = 0x80.toByte(),
-        instruction: Byte = 0x04,
-        parameter1: Byte = 0x00,
-        parameter2: Byte = 0x00,
+        instruction: Byte = 0x04.toByte(),
+        parameter1: Byte = 0x00.toByte(),
+        parameter2: Byte = 0x00.toByte(),
         fullContent: ByteArray,
     ) : this(
         byteArrayOf(
@@ -43,10 +43,10 @@ class ApduCommand(val content: ByteArray) {
     )
 
     /**
-     * Create a command passing a [ByteArray] content and a predetermined header.
+     * Create a command passing a [ByteArray] content and a header.
      * Use this if you want full control of the data being sent.
      *
-     * @param header The predetermined header for this command
+     * @param header The header for this command
      * @param fullContent The content of the command
      */
     constructor(
@@ -73,11 +73,11 @@ class ApduCommand(val content: ByteArray) {
      */
     constructor(
         clazz: Byte = 0x80.toByte(),
-        instruction: Byte = 0x04,
-        parameter1: Byte = 0x00,
-        parameter2: Byte = 0x00,
+        instruction: Byte = 0x04.toByte(),
+        parameter1: Byte = 0x00.toByte(),
+        parameter2: Byte = 0x00.toByte(),
         content: ByteArray,
-        contentSize: Int,
+        contentSize: Int = content.size,
         contentSizeByteLength: Int = 1,
     ) : this(
         clazz = clazz,
@@ -88,9 +88,35 @@ class ApduCommand(val content: ByteArray) {
     )
 
     /**
-     * Create a command passing a [ByteArray] content and a predetermined header.
+     * Create a command passing a String content.
      *
-     * @param header The predetermined header for this command
+     * @param clazz The first [Byte] of the command - Defaults to 0x80
+     * @param instruction The second [Byte] of the command - Defaults to 0x04
+     * @param parameter1 The third [Byte] of the command - Defaults to 0x00
+     * @param parameter2 The fourth [Byte] of the command - Defaults to 0x00
+     * @param content The content of the command
+     * @param contentSizeByteLength The quantity of bytes representing the data length - Defaults to 1
+     */
+    constructor(
+        clazz: Byte = 0x80.toByte(),
+        instruction: Byte = 0x04.toByte(),
+        parameter1: Byte = 0x00.toByte(),
+        parameter2: Byte = 0x00.toByte(),
+        content: String,
+        contentSizeByteLength: Int = 1
+    ) : this(
+        clazz = clazz,
+        instruction = instruction,
+        parameter1 = parameter1,
+        parameter2 = parameter2,
+        content = content.encodeToByteArray(),
+        contentSizeByteLength = contentSizeByteLength
+    )
+
+    /**
+     * Create a command passing a [ByteArray] content and a header.
+     *
+     * @param header The header for this command
      * @param content The content of the command
      * @param contentSize The length of the content
      * @param contentSizeByteLength The quantity of bytes representing the data length - Defaults to 1
@@ -98,7 +124,7 @@ class ApduCommand(val content: ByteArray) {
     constructor(
         header: ApduCommandHeader,
         content: ByteArray,
-        contentSize: Int,
+        contentSize: Int = content.size,
         contentSizeByteLength: Int = 1,
     ) : this(
         header = header,
@@ -106,21 +132,56 @@ class ApduCommand(val content: ByteArray) {
     )
 
     /**
-     * Create a command passing a [ByteArray] content.
+     * Create a command passing a [String] content and a header.
      *
-     * @param hexString The [Byte] string of the command header
+     * @param header The header for this command
      * @param content The content of the command
      * @param contentSizeByteLength The quantity of bytes representing the data length - Defaults to 1
      */
     constructor(
-        hexString: String,
+        header: ApduCommandHeader,
+        content: String,
+        contentSizeByteLength: Int = 1
+    ) : this(
+        header = header,
+        content = content.encodeToByteArray(),
+        contentSizeByteLength = contentSizeByteLength
+    )
+
+    /**
+     * Create a command passing a [ByteArray] content.
+     *
+     * @param headerHexString The [Byte] string of the command header
+     * @param content The content of the command
+     * @param contentSize The length of the content
+     * @param contentSizeByteLength The quantity of bytes representing the data length - Defaults to 1
+     */
+    constructor(
+        headerHexString: String,
         content: ByteArray,
-        contentSize: Int,
+        contentSize: Int = content.size,
         contentSizeByteLength: Int = 1,
     ) : this(
-        header = ApduCommandHeader.from(hexString),
+        header = ApduCommandHeader.from(headerHexString),
         content = content,
         contentSize = contentSize,
+        contentSizeByteLength = contentSizeByteLength
+    )
+
+    /**
+     * Create a command passing a [String] content.
+     *
+     * @param headerHexString The [Byte] String of the command header
+     * @param content The content of the command
+     * @param contentSizeByteLength The quantity of bytes representing the data length - Defaults to 1
+     */
+    constructor(
+        headerHexString: String,
+        content: String,
+        contentSizeByteLength: Int = 1
+    ) : this(
+        headerHexString = headerHexString,
+        content = content.encodeToByteArray(),
         contentSizeByteLength = contentSizeByteLength
     )
 
@@ -141,7 +202,7 @@ class ApduCommand(val content: ByteArray) {
     fun getDataSize(@IntRange(from = 1) dataLengthByteQuantity: Int = 1): Int {
         val lengthOffset = 4
         return if (dataLengthByteQuantity > 1) {
-            content.sliceArray(lengthOffset..lengthOffset + dataLengthByteQuantity - 1)
+            content.sliceArray(lengthOffset..<lengthOffset + dataLengthByteQuantity)
         } else {
             byteArrayOf(content[lengthOffset])
         }.asInt
@@ -157,7 +218,7 @@ class ApduCommand(val content: ByteArray) {
     fun getData(@IntRange(from = 1) dataLengthByteQuantity: Int = 1): ByteArray {
         val length: Int = getDataSize(dataLengthByteQuantity)
         val offset = 4 + dataLengthByteQuantity
-        return content.sliceArray(offset..offset + length - 1)
+        return content.sliceArray(offset..<offset + length)
     }
 
     /**
@@ -178,74 +239,6 @@ class ApduCommand(val content: ByteArray) {
      * @return The tag's response as a [ByteArray]
      */
     fun executeOnTag(isoDep: IsoDep): ByteArray = isoDep.transceive(content)
-
-    companion object {
-        /**
-         * Create a command passing a String content.
-         *
-         * @param clazz The first [Byte] of the command - Defaults to 0x80
-         * @param instruction The second [Byte] of the command - Defaults to 0x04
-         * @param parameter1 The third [Byte] of the command - Defaults to 0x00
-         * @param parameter2 The fourth [Byte] of the command - Defaults to 0x00
-         * @param content The content of the command
-         * @param contentSizeByteLength The quantity of bytes representing the data length - Defaults to 1
-         */
-        operator fun invoke(
-            clazz: Byte = 0x80.toByte(),
-            instruction: Byte = 0x04,
-            parameter1: Byte = 0x00,
-            parameter2: Byte = 0x00,
-            content: String,
-            contentSizeByteLength: Int = 1
-        ): ApduCommand = content.encodeToByteArray().let {
-            ApduCommand(
-                clazz = clazz,
-                instruction = instruction,
-                parameter1 = parameter1,
-                parameter2 = parameter2,
-                content = it,
-                contentSize = it.size,
-                contentSizeByteLength = contentSizeByteLength
-            )
-        }
-
-        /**
-         * Create a command passing a [String] content and a predetermined header.
-         *
-         * @param header The predetermined header for this command
-         * @param content The content of the command
-         * @param contentSizeByteLength The quantity of bytes representing the data length - Defaults to 1
-         */
-        operator fun invoke(
-            header: ApduCommandHeader,
-            content: String,
-            contentSizeByteLength: Int = 1
-        ): ApduCommand = content.encodeToByteArray().let {
-            ApduCommand(
-                header = header,
-                content = it,
-                contentSize = it.size,
-                contentSizeByteLength = contentSizeByteLength
-            )
-        }
-
-        /**
-         * Create a command passing a [String] content.
-         *
-         * @param hexString The [Byte] String of the command header
-         * @param content The content of the command
-         * @param contentSizeByteLength The quantity of bytes representing the data length - Defaults to 1
-         */
-        operator fun invoke(
-            hexString: String,
-            content: String,
-            contentSizeByteLength: Int = 1
-        ): ApduCommand = invoke(
-            header = ApduCommandHeader.from(hexString),
-            content = content,
-            contentSizeByteLength = contentSizeByteLength
-        )
-    }
 }
 
 /**
@@ -280,5 +273,26 @@ operator fun ApduCommand?.plus(other: ApduCommand): ApduCommand {
         header = other.getHeader(),
         content = getData() + other.getData(),
         contentSize = getDataSize() + other.getDataSize()
+    )
+}
+
+/**
+ * Merges two commands, keeping the second command's header.
+ * If the first command is null, returns the second command,
+ *
+ * @param other The other command to be combined with
+ *
+ * @return The combined commands as a [ApduCommand]
+ */
+fun ApduCommand?.plus(
+    other: ApduCommand,
+    @IntRange(from = 1) dataLengthByteQuantity: Int = 1
+): ApduCommand {
+    if (this == null) return other
+    return ApduCommand(
+        header = other.getHeader(),
+        content = getData(dataLengthByteQuantity) + other.getData(dataLengthByteQuantity),
+        contentSize = getDataSize(dataLengthByteQuantity) + other.getDataSize(dataLengthByteQuantity),
+        contentSizeByteLength = dataLengthByteQuantity
     )
 }

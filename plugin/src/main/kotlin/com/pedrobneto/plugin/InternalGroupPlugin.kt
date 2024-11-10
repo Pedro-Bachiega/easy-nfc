@@ -18,15 +18,15 @@ internal class InternalGroupPlugin : Plugin<Project> {
         }
 
         // Generate file containing all modules with publish plugin attached
-        target.tasks.register("publishModules") {
-            it.group = "groupTask"
+        target.tasks.register("publishModules") { task ->
+            task.group = "groupTask"
             // Store target directory into a variable to avoid project reference in the configuration cache
             val directory = target.layout.buildDirectory.get()
             val file = directory.file("modules.txt").asFile
             val publishLibraries = target.subprojects
                 .filter { it.plugins.hasPlugin("internal-publish") }
                 .map { it.name }
-            it.doLast { _ ->
+            task.doLast { _ ->
                 Files.createDirectories(directory.asFile.toPath())
                 val json = JsonArray()
                 publishLibraries.onEach(json::add)
