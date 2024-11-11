@@ -1,0 +1,46 @@
+name: "Gets and stores the new version name so we can use it to deploy"
+description: "Boilerplate steps"
+
+inputs:
+  ossrh_username:
+    description: User
+    required: false
+  ossrh_password:
+    description: Pass
+    required: false
+  sign_key_id:
+    description: Id
+    required: false
+  sign_password:
+    description: Other Pass
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    # Runs git describe
+    - name: Get next version name
+      id: new-version
+      uses: proudust/gh-describe@v1.5.3
+
+    # Inject describe result into build/version-name.txt
+    - name: Write version into build file
+      shell: bash
+      run: |
+        mkdir build
+        echo "${{ steps.new-version.outputs.describe }}" >build/version-name.txt
+
+    # Inject signing variables
+    - name: Inject sign into gradle.properties
+      shell: bash
+      env:
+        OSSRH_USERNAME: ${{ inputs.ossrh_username}}
+        OSSRH_PASSWORD: ${{ inputs.ossrh_password}}
+        SIGN_KEY_ID: ${{ inputs.sign_key_id}}
+        SIGN_PASSWORD: ${{ inputs.sign_password}}
+      run: |
+        echo "OSSRH_USERNAME=$OSSRH_USERNAME" >> gradle.properties
+        echo "OSSRH_PASSWORD=$OSSRH_PASSWORD" >> gradle.properties
+        echo "signing.keyId=$SIGN_KEY_ID" >> gradle.properties
+        echo "signing.password=$SIGN_PASSWORD" >> gradle.properties
+        echo "signing.secretKeyRingFile=$PWD/.github/files/easy_nfc_secret_key.gpg" >> gradle.properties
