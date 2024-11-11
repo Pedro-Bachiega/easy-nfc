@@ -1,0 +1,8 @@
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/gradle/"
+    schedule:
+      interval: "monthly"
+    rebase-strategy: "disabled"
+    open-pull-requests-limit: 1
